@@ -1,0 +1,266 @@
+"use client";
+
+import { useRouter, usePathname } from "next/navigation";
+import { useSidebar } from "@/components/sidebar-context";
+import {
+  Shield,
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  Globe,
+  Settings,
+  Users,
+  FileText,
+  Network,
+  Eye,
+  Lock,
+  Server,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Home,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+interface SidebarProps {
+  className?: string;
+}
+
+const navigation = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: Home,
+    current: true,
+    badge: null,
+  },
+  {
+    name: "Live Monitor",
+    href: "/dashboard/monitor",
+    icon: Eye,
+    current: false,
+    badge: "LIVE",
+  },
+  {
+    name: "Alerts",
+    icon: AlertTriangle,
+    href: "/alerts",
+    count: 12,
+  },
+  {
+    name: "Network Traffic",
+    href: "/dashboard/network",
+    icon: Network,
+    current: false,
+    badge: null,
+  },
+  {
+    name: "Analytics",
+    href: "/dashboard/analytics",
+    icon: BarChart3,
+    current: false,
+    badge: null,
+  },
+  {
+    name: "3D Globe",
+    href: "/dashboard/globe",
+    icon: Globe,
+    current: false,
+    badge: "NEW",
+  },
+  {
+    name: "Resources",
+    href: "/dashboard/resources",
+    icon: Server,
+    current: false,
+    badge: null,
+  },
+  {
+    name: "Security Logs",
+    href: "/dashboard/logs",
+    icon: FileText,
+    current: false,
+    badge: null,
+  },
+  {
+    name: "User Management",
+    href: "/dashboard/users",
+    icon: Users,
+    current: false,
+    badge: null,
+  },
+  {
+    name: "Security Policies",
+    href: "/dashboard/policies",
+    icon: Lock,
+    current: false,
+    badge: null,
+  },
+];
+
+const bottomNavigation = [
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
+    current: false,
+  },
+];
+
+export function Sidebar({ className }: SidebarProps) {
+  const { collapsed, setCollapsed } = useSidebar();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        await fetch("http://localhost:8000/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      router.push("/");
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "fixed left-0 top-0 z-40 flex flex-col h-screen bg-gray-900 border-r border-green-500/30 transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+        className
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-green-500/30">
+        {!collapsed && (
+          <div className="flex items-center space-x-2">
+            <Shield className="h-6 w-6 text-green-400" />
+            <span className="font-bold text-green-400 font-mono">EDOS-SHIELD</span>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Status Indicator */}
+      <div className="p-4 border-b border-green-500/30">
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          {!collapsed && <span className="text-xs text-green-400 font-mono">SYSTEM OPERATIONAL</span>}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-2 space-y-1">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+
+          return (
+            <Button
+              key={item.name}
+              variant="ghost"
+              onClick={() => router.push(item.href)}
+              className={cn(
+                "w-full justify-start text-left font-mono h-9",
+                collapsed ? "px-2" : "px-3",
+                isActive
+                  ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                  : "text-green-400 hover:bg-green-500/10 hover:text-green-300"
+              )}
+            >
+              <Icon className={cn("h-4 w-4 shrink-0", collapsed ? "" : "mr-3")} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge && (
+                    <Badge
+                      className={cn(
+                        "ml-2 text-xs font-mono",
+                        item.badge === "LIVE"
+                          ? "bg-red-500/20 text-red-300 border-red-500/30"
+                          : item.badge === "NEW"
+                          ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                          : "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
+                      )}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </Button>
+          );
+        })}
+      </nav>
+
+      {/* Bottom Navigation */}
+      <div className="border-t border-green-500/30 p-3 space-y-1">
+        {bottomNavigation.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+
+          return (
+            <Button
+              key={item.name}
+              variant="ghost"
+              onClick={() => router.push(item.href)}
+              className={cn(
+                "w-full justify-start text-left font-mono h-9",
+                collapsed ? "px-2" : "px-3",
+                isActive
+                  ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                  : "text-green-400 hover:bg-green-500/10 hover:text-green-300"
+              )}
+            >
+              <Icon className={cn("h-4 w-4 shrink-0", collapsed ? "" : "mr-3")} />
+              {!collapsed && <span>{item.name}</span>}
+            </Button>
+          );
+        })}
+
+        {/* Logout Button */}
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={cn(
+            "w-full justify-start text-left font-mono h-9 text-red-400 hover:bg-red-500/10 hover:text-red-300",
+            collapsed ? "px-2" : "px-3"
+          )}
+        >
+          <LogOut className={cn("h-4 w-4 shrink-0", collapsed ? "" : "mr-3")} />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+      </div>
+
+      {/* User Info (when expanded) */}
+      {!collapsed && (
+        <div className="border-t border-green-500/30 p-3">
+          <div className="text-xs text-green-500 font-mono">
+            <div>root@edos-shield</div>
+            <div className="text-green-600">clearance: admin</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
